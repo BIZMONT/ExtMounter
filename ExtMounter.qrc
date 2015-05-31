@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file>resource/exit.png</file>
+        <file>resource/filesave.png</file>
+        <file>resource/linuxconf.png</file>
+        <file>resource/disk.png</file>
+        <file>resource/file_folder.png</file>
+        <file>resource/file_unknown.png</file>
+        <file>resource/Icon.ico</file>
+    </qresource>
+</RCC>

@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Ext2Explore</class>
+ <widget class="QMainWindow" name="Ext2Explore">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>554</width>
+    <height>311</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>ExtMounter</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="ExtMounter.qrc">
+    <normaloff>:/icons/resource/Icon.ico</normaloff>:/icons/resource/Icon.ico</iconset>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <item>
+     <widget class="QSplitter" name="splitter">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <widget class="QTreeView" name="tree">
+       <property name="layoutDirection">
+        <enum>Qt::LeftToRight</enum>
+       </property>
+      </widget>
+      <widget class="QListView" name="list"/>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>554</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menu_File">
+    <property name="title">
+     <string>&amp;File</string>
+    </property>
+    <addaction name="separator"/>
+    <addaction name="action_Rescan_System"/>
+    <addaction name="separator"/>
+    <addaction name="action_Exit"/>
+   </widget>
+   <addaction name="menu_File"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="action_Rescan_System">
+   <property name="icon">
+    <iconset resource="ExtMounter.qrc">
+     <normaloff>:/icons/resource/linuxconf.png</normaloff>:/icons/resource/linuxconf.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Rescan System</string>
+   </property>
+  </action>
+  <action name="action_Exit">
+   <property name="icon">
+    <iconset resource="ExtMounter.qrc">
+     <normaloff>:/icons/resource/exit.png</normaloff>:/icons/resource/exit.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Exit</string>
+   </property>
+  </action>
+  <action name="action_Save">
+   <property name="icon">
+    <iconset resource="ExtMounter.qrc">
+     <normaloff>:/icons/resource/filesave.png</normaloff>:/icons/resource/filesave.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Зберегти</string>
+   </property>
+  </action>
+ </widget>
+ <resources>
+  <include location="ExtMounter.qrc"/>
+ </resources>
+ <connections>
+  <connection>
+   <sender>action_Exit</sender>
+   <signal>triggered()</signal>
+   <receiver>Ext2Explore</receiver>
+   <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>399</x>
+     <y>292</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>
