@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>554</width>
-    <height>311</height>
+    <width>550</width>
+    <height>310</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -39,7 +39,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>554</width>
+     <width>550</width>
      <height>20</height>
     </rect>
    </property>
@@ -54,11 +54,10 @@
    </widget>
    <addaction name="menu_File"/>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
   <action name="action_Rescan_System">
    <property name="icon">
     <iconset resource="ExtMounter.qrc">
-     <normaloff>:/icons/resource/linuxconf.png</normaloff>:/icons/resource/linuxconf.png</iconset>
+     <normaloff>:/icons/resource/Rescan.png</normaloff>:/icons/resource/Rescan.png</iconset>
    </property>
    <property name="text">
     <string>&amp;Rescan System</string>

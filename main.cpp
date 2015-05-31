@@ -1,5 +1,6 @@
 #include <QtGui/QApplication>
 #include "ExtExplorer.h"
+#include "log.cpp"
 
 int main(int argc, char *argv[])
 {

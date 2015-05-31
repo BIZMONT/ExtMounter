@@ -1,0 +1,13 @@
+INPUT(
+./debug\main.o
+./debug\ExtCopy.o
+./debug\ExtExplorer.o
+./debug\FileSystem.o
+./debug\Read.o
+./debug\LVM.o
+./debug\Log.o
+./debug\DisksOperations.o
+./debug\moc_ExtCopy.o
+./debug\moc_ExtExplorer.o
+./debug\qrc_ExtMounter.o
+);
