@@ -6,13 +6,13 @@ static char buff[4096];
 
 int log_init()
 {
-    logfile = fopen("ext2explorelog.log", "w+");
+    logfile = fopen("ExtMounter.log", "w+");
     if(!logfile)
         return -1;
     return 0;
 }
 
-int ext2explore_log(const char *msg, ...)
+int log(const char *msg, ...)
 {
     va_list ap;
 

@@ -1,16 +1,20 @@
-#include <QFileDialog>
-
 #include "ExtExplorer.h"
 #include "ExtCopy.h"
 
-#include "ui_ext2explore.h"
+#include "ui_extexplorer.h"
 
-Ext2Explore::Ext2Explore(QWidget *parent) : QMainWindow(parent), ui(new Ui::Ext2Explore)
+ExtExplorer::ExtExplorer(QWidget *parent) : QMainWindow(parent), ui(new Ui::ExtExplorer)
 {
     filemodel = new QStandardItemModel(this);
     app = new Read();
 
     ui->setupUi(this);
+
+    ui->mainsplitter->setStretchFactor(0, 2);
+    ui->mainsplitter->setStretchFactor(1, 1);
+
+    ui->splitter->setStretchFactor(0, 1);
+    ui->splitter->setStretchFactor(1, 3);
 
     ui->tree->setModel(filemodel);
     ui->tree->header()->hide();
@@ -34,21 +38,32 @@ Ext2Explore::Ext2Explore(QWidget *parent) : QMainWindow(parent), ui(new Ui::Ext2
 
     connect(ui->tree, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(on_action_item_dbclicked(const QModelIndex &)));
     connect(ui->list, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(on_action_item_dbclicked(const QModelIndex &)));
-    connect(this, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(Context_menu(const QPoint &)));
+    connect(this, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(ContextMenu(const QPoint &)));
 
     codec = QTextCodec::codecForName("utf-8");
 
-    init_root_fs();
+
+    InitFileSystemRoot();
+    Loging();
 }
 
-Ext2Explore::~Ext2Explore()
+ExtExplorer::~ExtExplorer()
 {    
     delete ui;
     delete filemodel;
     delete app;
 }
 
-void Ext2Explore::delete_children(QStandardItem *parent)
+void ExtExplorer::Loging()
+{
+    QFile file("ExtMounter.log");
+    file.open(QIODevice::ReadOnly);
+    QString str = file.readAll();
+    ui->worklog->setText(str);
+    file.close();
+}
+
+void ExtExplorer::DeleteChildren(QStandardItem *parent)
 {
     int nrows;
     QVariant fileData;
@@ -65,7 +80,7 @@ void Ext2Explore::delete_children(QStandardItem *parent)
         if(!item)
             continue;
 
-        delete_children(item);
+        DeleteChildren(item);
         fileData = item->data(Qt::UserRole);
         file = (ExtFile *) fileData.value<void *>();
         delete file;
@@ -73,7 +88,7 @@ void Ext2Explore::delete_children(QStandardItem *parent)
     parent->removeRows(0, nrows);
 }
 
-void Ext2Explore::init_root_fs()//Формування коренневого каталогу дерева
+void ExtExplorer::InitFileSystemRoot()//Формування коренневого каталогу дерева
 {
     Partition *temp;
     list<Partition *> parts;
@@ -108,7 +123,14 @@ void Ext2Explore::init_root_fs()//Формування коренневого каталогу дерева
     }
 }
 
-QString Ext2Explore::handle_mime(string file, uint16_t mode)
+void ExtExplorer::ContextMenu(const QPoint &point)
+{
+    QMenu menu(ui->splitter);
+    menu.addAction(ui->action_Save);
+    menu.exec(this->mapToGlobal(point));
+}
+
+QString ExtExplorer::handle_mime(string file, uint16_t mode)
 {
     QString str;
 
@@ -120,7 +142,7 @@ QString Ext2Explore::handle_mime(string file, uint16_t mode)
     return str;
 }
 
-void Ext2Explore::changeEvent(QEvent *e)
+void ExtExplorer::changeEvent(QEvent *e)
 {
     QMainWindow::changeEvent(e);
     switch (e->type())
@@ -133,7 +155,7 @@ void Ext2Explore::changeEvent(QEvent *e)
     }
 }
 
-void Ext2Explore::on_action_Exit_triggered()
+void ExtExplorer::on_action_Exit_triggered()
 {
     delete ui;
     delete filemodel;
@@ -142,16 +164,17 @@ void Ext2Explore::on_action_Exit_triggered()
     close();
 }
 
-void Ext2Explore::on_action_Rescan_System_triggered()
+void ExtExplorer::on_action_Rescan_System_triggered()
 {
-    delete_children(root);
+    DeleteChildren(root);
     delete app;
 
     app = new Read();
-    init_root_fs();
+    InitFileSystemRoot();
+    Loging();
 }
 
-void Ext2Explore::on_action_item_dbclicked(const QModelIndex &index)
+void ExtExplorer::on_action_item_dbclicked(const QModelIndex &index)
 {
     QStandardItem *children;
     QStandardItem *parentItem;
@@ -188,14 +211,7 @@ void Ext2Explore::on_action_item_dbclicked(const QModelIndex &index)
     part->close_dir(dir);
 }
 
-void Ext2Explore::Context_menu(const QPoint &point)
-{
-    QMenu menu(ui->splitter);
-    menu.addAction(ui->action_Save);
-    menu.exec(this->mapToGlobal(point));
-}
-
-void Ext2Explore::on_action_Save_triggered()
+void ExtExplorer::on_action_Save_triggered()
 {
     QString filename;
     QModelIndexList indexes = selectionModel->selectedIndexes();
@@ -214,20 +230,21 @@ void Ext2Explore::on_action_Save_triggered()
 
     if(EXT2_S_ISDIR(file->inode.i_mode))
     {
-        filename = QFileDialog::getExistingDirectory(this, tr("Save folder in"),
+        filename = QFileDialog::getExistingDirectory(this, tr("Зберегти папку в"),
                                 QString::fromAscii(""),
                                 QFileDialog::ShowDirsOnly);
     }
     else
     {
-        filename = QFileDialog::getSaveFileName(this, tr("Save File/Folder"),
+        filename = QFileDialog::getSaveFileName(this, tr("Зберегти Файл/Папку"),
                                 QString::fromStdString(file->file_name),
-                                tr("All Files (*)"));
+                                tr("Усі файли (*)"));
     }
     if(filename.isEmpty())
         return;
 
     copyfile.set_file(file);
     copyfile.set_name(filename);
-    copyfile.start_copy();
+    copyfile.StartCopy();
+    Loging();
 }

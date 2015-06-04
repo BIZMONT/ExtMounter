@@ -8,12 +8,14 @@
 #include <list>
 #include <string>
 #include <QCache>
+#include <dirent.h>
 
-#include "Platform.h"
+#include "DisksOperations.h"
+#include <windows.h>
 #include "FileSystem.h"
 
 #define MAX_CACHE_SIZE          500
-#define INVALID_TABLE                   3
+#define INVALID_TABLE           3
 #define FILE_TYPE_PARTITON		0x7E
 #define FILE_TYPE_DIR			2
 
@@ -56,7 +58,7 @@
 
 using namespace std;
 
-static INLINE const char *get_type_string(int type)
+static __inline__ const char *get_type_string(int type)
 {
 	switch(type)
 	{
@@ -72,7 +74,7 @@ static INLINE const char *get_type_string(int type)
 	return "Unknown Type";
 }
 
-static INLINE char *get_access(unsigned long mode)
+static __inline__ char *get_access(unsigned long mode)
 {
 	static char acc[9];
 	acc[0] = (mode & EXT2_S_IRUSR)? 'r':'-';
@@ -101,7 +103,7 @@ public:
     uint32_t    inode_num;
     uint8_t     file_type;
     string      file_name;
-    lloff_t     file_size;
+    uint64_t     file_size;
 
     EXT2_INODE  inode;
     Partition *partition;
@@ -112,15 +114,15 @@ typedef struct ext2dirent {
     EXT2_DIR_ENTRY *next;
     EXT2_DIR_ENTRY *dirbuf;
     ExtFile *parent;
-    lloff_t read_bytes;     // Bytes already read
-    lloff_t next_block;
+    uint64_t read_bytes;     // Bytes already read
+    uint64_t next_block;
 } EXT2DIRENT;
 
 class Partition {
-    FileHandle  handle;
+    HANDLE  handle;
     int         sect_size;
-    lloff_t	total_sectors;
-    lloff_t 	relative_sect;
+    uint64_t	total_sectors;
+    uint64_t 	relative_sect;
     string      linux_name;
 
     int inodes_per_group;
@@ -129,15 +131,15 @@ class Partition {
     uint32_t totalGroups;
     EXT2_GROUP_DESC *desc;
     char *inode_buffer;         // buffer to cache last used block of inodes
-    lloff_t last_block;          // block number of the last inode block read
+    uint64_t last_block;          // block number of the last inode block read
     ExtFile *root;
-    QCache <lloff_t , char > buffercache; //LRU based cache for blocks
+    QCache <uint64_t , char > buffercache; //LRU based cache for blocks
     LogicalVolume *lvol;
     
-    int readblock(lloff_t blocknum, void *buffer);
+    int readblock(uint64_t blocknum, void *buffer);
     uint32_t fileblock_to_logical(EXT2_INODE *ino, uint32_t lbn);
-    lloff_t extent_to_logical(EXT2_INODE *ino, lloff_t lbn);
-    lloff_t extent_binarysearch(EXT4_EXTENT_HEADER *header, lloff_t lbn, bool isallocated);
+    uint64_t extent_to_logical(EXT2_INODE *ino, uint64_t lbn);
+    uint64_t extent_binarysearch(EXT4_EXTENT_HEADER *header, uint64_t lbn, bool isallocated);
     int mount();
 
 public:
@@ -145,7 +147,7 @@ public:
     bool is_valid;      // is this valid Ext2/3/4 partition
 
 public:
-    Partition(lloff_t, lloff_t, int ssise, FileHandle , LogicalVolume *vol);
+    Partition(uint64_t, uint64_t, int ssise, HANDLE , LogicalVolume *vol);
     ~Partition();
 
     void set_linux_name(const char *, int , int);
@@ -154,7 +156,7 @@ public:
     ExtFile *get_root() { return root; }
     int get_blocksize() { return blocksize; }
     ExtFile *read_inode(uint32_t inum);
-    int read_data_block(EXT2_INODE *ino, lloff_t lbn, void *buf);
+    int read_data_block(EXT2_INODE *ino, uint64_t lbn, void *buf);
     EXT2DIRENT *open_dir(ExtFile *parent);
     ExtFile *read_dir(EXT2DIRENT *);
     void close_dir(EXT2DIRENT *);
@@ -167,7 +169,7 @@ private:
 
     list <Partition *> nparts;
 
-    int scan_ebr(FileHandle , lloff_t , int , int);
+    int scan_ebr(HANDLE , uint64_t , int , int);
     int scan_partitions(char *path, int);
     void clear_partitions();
 
@@ -190,15 +192,12 @@ extern "C"{
 
 int log_init();
 void log_exit();
-int ext2explore_log(const char *msg, ...);
-int ext2explore_log_err(char *file, char *line, const char *buf, ...);
+int log(const char *msg, ...);
 
 #ifdef __cplusplus
 }
 #endif
 
-#define LOG_INFO	ext2explore_log
-#define LOG		LOG_INFO
-#define LOG_ERROR	LOG_INFO
+#define LOG	log
 
 #endif

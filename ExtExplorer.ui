@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Ext2Explore</class>
- <widget class="QMainWindow" name="Ext2Explore">
+ <class>ExtExplorer</class>
+ <widget class="QMainWindow" name="ExtExplorer">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
     <width>550</width>
-    <height>310</height>
+    <height>500</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,19 +17,35 @@
    <iconset resource="ExtMounter.qrc">
     <normaloff>:/icons/resource/Icon.ico</normaloff>:/icons/resource/Icon.ico</iconset>
   </property>
+  <property name="iconSize">
+   <size>
+    <width>40</width>
+    <height>40</height>
+   </size>
+  </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QHBoxLayout" name="horizontalLayout">
-    <item>
-     <widget class="QSplitter" name="splitter">
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
+     <widget class="QSplitter" name="mainsplitter">
       <property name="orientation">
-       <enum>Qt::Horizontal</enum>
+       <enum>Qt::Vertical</enum>
       </property>
-      <widget class="QTreeView" name="tree">
-       <property name="layoutDirection">
-        <enum>Qt::LeftToRight</enum>
+      <widget class="QSplitter" name="splitter">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <widget class="QTreeView" name="tree">
+        <property name="layoutDirection">
+         <enum>Qt::LeftToRight</enum>
+        </property>
+       </widget>
+       <widget class="QListView" name="list"/>
+      </widget>
+      <widget class="QTextEdit" name="worklog">
+       <property name="textInteractionFlags">
+        <set>Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
        </property>
       </widget>
-      <widget class="QListView" name="list"/>
      </widget>
     </item>
    </layout>
@@ -89,7 +105,7 @@
   <connection>
    <sender>action_Exit</sender>
    <signal>triggered()</signal>
-   <receiver>Ext2Explore</receiver>
+   <receiver>ExtExplorer</receiver>
    <slot>close()</slot>
    <hints>
     <hint type="sourcelabel">

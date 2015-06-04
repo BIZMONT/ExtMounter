@@ -1,14 +1,14 @@
 /********************************************************************************
-** Form generated from reading UI file 'ext2progress.ui'
+** Form generated from reading UI file 'Progress.ui'
 **
-** Created: Sun 31. May 22:44:03 2015
+** Created: Mon 1. Jun 16:59:36 2015
 **      by: Qt User Interface Compiler version 4.8.1
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
 ********************************************************************************/
 
-#ifndef UI_EXT2PROGRESS_H
-#define UI_EXT2PROGRESS_H
+#ifndef UI_PROGRESS_H
+#define UI_PROGRESS_H
 
 #include <QtCore/QVariant>
 #include <QtGui/QAction>
@@ -67,9 +67,9 @@ public:
     void retranslateUi(QDialog *ProgressDialog)
     {
         ProgressDialog->setWindowTitle(QApplication::translate("ProgressDialog", "Copying Files ...", 0, QApplication::UnicodeUTF8));
-        FileLabel->setText(QApplication::translate("ProgressDialog", "4", 0, QApplication::UnicodeUTF8));
-        ToLabel->setText(QApplication::translate("ProgressDialog", "4", 0, QApplication::UnicodeUTF8));
-        Fromlabel->setText(QApplication::translate("ProgressDialog", "4", 0, QApplication::UnicodeUTF8));
+        FileLabel->setText(QApplication::translate("ProgressDialog", "0", 0, QApplication::UnicodeUTF8));
+        ToLabel->setText(QApplication::translate("ProgressDialog", "0", 0, QApplication::UnicodeUTF8));
+        Fromlabel->setText(QApplication::translate("ProgressDialog", "0", 0, QApplication::UnicodeUTF8));
     } // retranslateUi
 
 };
@@ -80,4 +80,4 @@ namespace Ui {
 
 QT_END_NAMESPACE
 
-#endif // UI_EXT2PROGRESS_H
+#endif // UI_PROGRESS_H

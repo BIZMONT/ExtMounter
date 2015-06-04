@@ -21,13 +21,13 @@ struct MBRpartition {
 #define pt_offset(b, n)	((struct MBRpartition *)((b) + 0x1be + (n) * sizeof(struct MBRpartition)))
 
 /* A valid partition table sector ends in 0x55 0xaa */
-static INLINE unsigned int 
+static __inline__ unsigned int
 part_table_flag(unsigned char *b) 
 {
 	return ((uint) b[510]) + (((uint) b[511]) << 8);
 }
 
-static INLINE int 
+static __inline__ int
 valid_part_table_flag(unsigned char *b) 
 {
 	return (b[510] == 0x55 && b[511] == 0xaa);
@@ -35,7 +35,7 @@ valid_part_table_flag(unsigned char *b)
 
 /* start_sect and nr_sects are stored little endian on all machines */
 /* moreover, they are not aligned correctly */
-static INLINE void 
+static __inline__ void
 store4_little_endian(unsigned char *cp, unsigned int val) 
 {
 	cp[0] = (val & 0xff);
@@ -44,32 +44,32 @@ store4_little_endian(unsigned char *cp, unsigned int val)
 	cp[3] = ((val >> 24) & 0xff);
 }
 
-static INLINE unsigned int 
+static __inline__ unsigned int
 read4_little_endian(unsigned char *cp) 
 {
 	return (uint)(cp[0]) + ((uint)(cp[1]) << 8) \
 		+ ((uint)(cp[2]) << 16) + ((uint)(cp[3]) << 24);
 }
 
-static INLINE void 
+static __inline__ void
 set_start_sect(struct MBRpartition *p, unsigned int start_sect) 
 {
 	store4_little_endian(p->start4, start_sect);
 }
 
-static INLINE unsigned int 
+static __inline__ unsigned int
 get_start_sect(struct MBRpartition *p) 
 {
 	return read4_little_endian(p->start4);
 }
 
-static INLINE void 
+static __inline__ void
 set_nr_sects(struct MBRpartition *p, unsigned int nr_sects) 
 {
 	store4_little_endian(p->size4, nr_sects);
 }
 
-static INLINE unsigned int 
+static __inline__ unsigned int
 get_nr_sects(struct MBRpartition *p) 
 {
 	return read4_little_endian(p->size4);

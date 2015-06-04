@@ -70,7 +70,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>4</string>
+    <string>0</string>
    </property>
   </widget>
   <widget class="QLabel" name="ToLabel">
@@ -83,7 +83,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>4</string>
+    <string>0</string>
    </property>
   </widget>
   <widget class="QLabel" name="Fromlabel">
@@ -96,7 +96,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>4</string>
+    <string>0</string>
    </property>
   </widget>
  </widget>

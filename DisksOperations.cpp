@@ -1,13 +1,6 @@
-#ifdef WIN32
-#include <windows.h>
-#include <winioctl.h>
-#include <fcntl.h>
+#include "DisksOperations.h"
 
-#include "platform.h"
-
-#define DEVICE	"\\\\.\\PhysicalDrive0"
-
-FileHandle open_disk(const char *path, int *sect_size)
+HANDLE OpenDisk(const char *path, int *sect_size)
 {
     HANDLE handle;
     DISK_GEOMETRY dsk;
@@ -37,11 +30,10 @@ FileHandle open_disk(const char *path, int *sect_size)
     else
         *sect_size = dsk.BytesPerSector;
 
-
     return handle;
 }
 
-int get_ndisks()
+int GetDisks()
 {
     HANDLE hDevice;               // handle to the drive to be examined
     int ndisks = 0;
@@ -64,32 +56,9 @@ int get_ndisks()
     return ndisks - 1;
 }
 
-int read_disk(FileHandle hnd, void *ptr, lloff_t sector, int nsects, int sectorsize)
+int ReadDisk(HANDLE hnd, void *ptr, uint64_t sector, int nsects, int sectorsize)
 {
-    lloff_t offset;
-    DWORD rd, len;
-    DWORD low;
-    LONG high;
-    BOOL ret;
-
-    offset = sector * sectorsize;
-
-    low = (DWORD)(offset & 0xFFFFFFFF);
-    high = (DWORD)((offset >> 32)& 0xFFFFFFFF);
-
-    low = SetFilePointer(hnd, low, &high, FILE_BEGIN);
-
-    len = nsects * sectorsize;
-    ret = ReadFile(hnd, ptr, len, &rd, NULL);
-    if(!ret)
-        return -1;
-
-    return rd;
-}
-
-int write_disk(FileHandle hnd, void *ptr, lloff_t sector, int nsects, int sectorsize)
-{
-    lloff_t offset;
+    uint64_t offset;
     DWORD rd, len;
     DWORD low;
     LONG high;
@@ -129,5 +98,3 @@ int get_nthdevice(char *path, int ndisks)
 
     return 0;
 }
-
-#endif

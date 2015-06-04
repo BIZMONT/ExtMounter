@@ -1,10 +1,9 @@
 #include "Read.h"
 #include "LVM.h"
 
-Partition::Partition(lloff_t size, lloff_t offset, int ssize, FileHandle phandle, LogicalVolume *vol)
+Partition::Partition(uint64_t size, uint64_t offset, int ssize, HANDLE phandle, LogicalVolume *vol)
 {
     int ret;
-
     total_sectors = size;
     relative_sect = offset;
     handle = phandle;
@@ -13,7 +12,6 @@ Partition::Partition(lloff_t size, lloff_t offset, int ssize, FileHandle phandle
     inode_buffer = NULL;
     lvol = vol;
     buffercache.setMaxCost(MAX_CACHE_SIZE);
-    //has_extent = 1;
     ret = mount();
     if(ret < 0)
     {
@@ -55,12 +53,12 @@ string &Partition::get_linux_name()
     return linux_name;
 }
 
-int Partition::readblock(lloff_t blocknum, void *buffer)
+int Partition::readblock(uint64_t blocknum, void *buffer)
 {
     char *newbuffer;
     int nsects = blocksize/sect_size;
     int ret;
-    lloff_t sectno;
+    uint64_t sectno;
 
     newbuffer = buffercache.take(blocknum);
     if(!newbuffer)
@@ -71,13 +69,13 @@ int Partition::readblock(lloff_t blocknum, void *buffer)
 
         if(lvol)
         {
-            sectno = lvol->lvm_mapper((lloff_t)nsects * blocknum);
+            sectno = lvol->lvm_mapper((uint64_t)nsects * blocknum);
         }
         else
         {
-            sectno = (lloff_t)((lloff_t)nsects * blocknum) + relative_sect;
+            sectno = (uint64_t)((uint64_t)nsects * blocknum) + relative_sect;
         }
-        ret = read_disk(handle, newbuffer, sectno, nsects, sect_size);
+        ret = ReadDisk(handle, newbuffer, sectno, nsects, sect_size);
         if(ret < 0)
         {
             delete [] newbuffer;
@@ -96,7 +94,7 @@ int Partition::mount()
     int gSizes, gSizeb;		/* Size of total group desc in sectors */
     char *tmpbuf;
 
-    read_disk(handle, &sblock, relative_sect + 2, 2, sect_size);	/* read superBlock of root */
+    ReadDisk(handle, &sblock, relative_sect + 2, 2, sect_size);	/* read superBlock of root */
     if(sblock.s_magic != EXT2_SUPER_MAGIC)
     {
         LOG("Bad Super Block. The drive %s is not ext2 formatted.\n", linux_name.c_str());
@@ -111,7 +109,7 @@ int Partition::mount()
     inodes_per_group = EXT2_INODES_PER_GROUP(&sblock);
     inode_size = EXT2_INODE_SIZE(&sblock);
 
-    LOG("Block size %d, inp %d, inodesize %d\n", blocksize, inodes_per_group, inode_size);
+    LOG("    Розмір блоку: %d\n    inp: %d\n    inodesize: %d\n", blocksize, inodes_per_group, inode_size);
     totalGroups = (sblock.s_blocks_count)/EXT2_BLOCKS_PER_GROUP(&sblock);
     gSizeb = (sizeof(EXT2_GROUP_DESC) * totalGroups);
     gSizes = (gSizeb / sect_size)+1;
@@ -132,9 +130,9 @@ int Partition::mount()
     /* Read all Group descriptors and store in buffer */
     /* I really dont know the official start location of Group Descriptor array */
     if((blocksize/sect_size) <= 2)
-        read_disk(handle, tmpbuf, relative_sect + ((blocksize/sect_size) + 2), gSizes, sect_size);
+        ReadDisk(handle, tmpbuf, relative_sect + ((blocksize/sect_size) + 2), gSizes, sect_size);
     else
-        read_disk(handle, tmpbuf, relative_sect + (blocksize/sect_size), gSizes, sect_size);
+        ReadDisk(handle, tmpbuf, relative_sect + (blocksize/sect_size), gSizes, sect_size);
 
     memcpy(desc, tmpbuf, gSizeb);
 
@@ -193,7 +191,6 @@ ExtFile *Partition::read_dir(EXT2DIRENT *dirent)
             dirent->next = NULL;
             if(dirent->read_bytes < dirent->parent->file_size)
             {
-                //LOG("DIR: Reading next block %d parent %s\n", dirent->next_block, dirent->parent->file_name.c_str());
                 ret = read_data_block(&dirent->parent->inode, dirent->next_block, dirent->dirbuf);
                 if(ret < 0)
                     return NULL;
@@ -272,10 +269,8 @@ ExtFile *Partition::read_inode(uint32_t inum)
     }
     src = (EXT2_INODE *)(inode_buffer + inode_index);
     file->inode = *src;
-
-    //LOG("BLKNUM is %d, inode_index %d\n", file->inode.i_size, inode_index);
     file->inode_num = inum;
-    file->file_size = (lloff_t) src->i_size | ((lloff_t) src->i_size_high << 32);
+    file->file_size = (uint64_t) src->i_size | ((uint64_t) src->i_size_high << 32);
     if(file->file_size == 0)
     {
         LOG("Inode %d with file size 0\n", inum);
@@ -288,9 +283,9 @@ ExtFile *Partition::read_inode(uint32_t inum)
     return file;
 }
 
-int Partition::read_data_block(EXT2_INODE *ino, lloff_t lbn, void *buf)
+int Partition::read_data_block(EXT2_INODE *ino, uint64_t lbn, void *buf)
 {
-    lloff_t block;
+    uint64_t block;
 
     if(INODE_HAS_EXTENT(ino))
         block = extent_to_logical(ino, lbn);
@@ -303,13 +298,13 @@ int Partition::read_data_block(EXT2_INODE *ino, lloff_t lbn, void *buf)
     return readblock(block, buf);
 }
 
-lloff_t Partition::extent_binarysearch(EXT4_EXTENT_HEADER *header, lloff_t lbn, bool isallocated)
+uint64_t Partition::extent_binarysearch(EXT4_EXTENT_HEADER *header, uint64_t lbn, bool isallocated)
 {
     EXT4_EXTENT *extent;
     EXT4_EXTENT_IDX *index;
     EXT4_EXTENT_HEADER *child;
-    lloff_t physical_block = 0;
-    lloff_t block;
+    uint64_t physical_block = 0;
+    uint64_t block;
 
     if(header->eh_magic != EXT4_EXT_MAGIC)
     {
@@ -317,20 +312,17 @@ lloff_t Partition::extent_binarysearch(EXT4_EXTENT_HEADER *header, lloff_t lbn, 
         return 0;
     }
     extent = EXT_FIRST_EXTENT(header);
-    //    LOG("HEADER: magic %x Entries: %d depth %d\n", header->eh_magic, header->eh_entries, header->eh_depth);
     if(header->eh_depth == 0)
     {        
         for(int i = 0; i < header->eh_entries; i++)
         {         
-            //          LOG("EXTENT: Block: %d Length: %d LBN: %d\n", extent->ee_block, extent->ee_len, lbn);
             if((lbn >= extent->ee_block) &&
                (lbn < (extent->ee_block + extent->ee_len)))
             {
                 physical_block = ext_to_block(extent) + lbn;
-                physical_block = physical_block - (lloff_t)extent->ee_block;
+                physical_block = physical_block - (uint64_t)extent->ee_block;
                 if(isallocated)
                     delete [] header;
-                //                LOG("Physical Block: %d\n", physical_block);
                 return physical_block;
             }
             extent++; // Pointer increment by size of Extent.
@@ -341,7 +333,6 @@ lloff_t Partition::extent_binarysearch(EXT4_EXTENT_HEADER *header, lloff_t lbn, 
     index = EXT_FIRST_INDEX(header);
     for(int i = 0; i < header->eh_entries; i++)
     {
-        //        LOG("INDEX: Block: %d Leaf: %d \n", index->ei_block, index->ei_leaf_lo);
         if(lbn >= index->ei_block)
         {
             child = (EXT4_EXTENT_HEADER *) new char [blocksize];
@@ -359,9 +350,9 @@ lloff_t Partition::extent_binarysearch(EXT4_EXTENT_HEADER *header, lloff_t lbn, 
     return physical_block;
 }
 
-lloff_t Partition::extent_to_logical(EXT2_INODE *ino, lloff_t lbn)
+uint64_t Partition::extent_to_logical(EXT2_INODE *ino, uint64_t lbn)
 {
-    lloff_t block;
+    uint64_t block;
     struct ext4_extent_header *header;
 
     header = get_ext4_header(ino);

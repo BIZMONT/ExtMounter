@@ -1,6 +1,3 @@
-#include <QMessageBox>
-#include <QDir>
-
 #include "ExtCopy.h"
 
 ExtCopy::ExtCopy(ExtFile *parent, QString &dest)
@@ -25,7 +22,7 @@ ExtCopy::~ExtCopy()
     delete progress;
 }
 
-void ExtCopy::start_copy()
+void ExtCopy::StartCopy()
 {
     if(!EXT2_S_ISREG(file->inode.i_mode) &&
        !EXT2_S_ISDIR(file->inode.i_mode))
@@ -46,8 +43,8 @@ void ExtCopy::start_copy()
 bool ExtCopy::showMessageBox()
 {
     QMessageBox msgBox;
-    msgBox.setText(QString::fromAscii("You pressed the cancel button on the progress dialog box."));
-    msgBox.setInformativeText(QString::fromAscii("Are you sure you want to cancel copying?"));
+    msgBox.setText(QString::fromAscii("Ви намагаєтеся відмінити копіювання"));
+    msgBox.setInformativeText(QString::fromAscii("Ви впевнені, що хочете відмінити копіювання?"));
     msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
     msgBox.setDefaultButton(QMessageBox::No);
     int ret = msgBox.exec();
@@ -110,30 +107,28 @@ void ExtCopyProcess::run()
 {
     if(EXT2_S_ISDIR(file->inode.i_mode))
     {
-        copy_folder(filename, file);
+        CopyFolder(filename, file);
         emit sig_copydone();
         return ;
     }
     else if(!EXT2_S_ISREG(file->inode.i_mode))
         return ;
 
-    copy_file(filename, file);
+    CopyFile(filename, file);
     emit sig_copydone();
 }
 
-bool ExtCopyProcess::copy_file(QString &destfile, ExtFile *srcfile)
+bool ExtCopyProcess::CopyFile(QString &destfile, ExtFile *srcfile)
 {
-    lloff_t blocks, blkindex;
+    uint64_t blocks, blkindex;
     QString qsrc;
-    QString nullstr = QString::fromAscii("");
-    QByteArray ba;
     int extra;
     int ret;
 
     filetosave = new QFile(destfile);
     if (!filetosave->open(QIODevice::ReadWrite | QIODevice::Truncate))
     {
-        LOG("Error creating file %s.\n", srcfile->file_name.c_str());
+        LOG("Помилка створення файлу %s!\n", srcfile->file_name.c_str());
         return false;
     }
 
@@ -168,10 +163,11 @@ bool ExtCopyProcess::copy_file(QString &destfile, ExtFile *srcfile)
         filetosave->write(buffer, extra);
     }
     filetosave->close();
+    LOG("Файл %s збережено\n", srcfile->file_name.c_str());
     return true;
 }
 
-bool ExtCopyProcess::copy_folder(QString &path, ExtFile *parent)
+bool ExtCopyProcess::CopyFolder(QString &path, ExtFile *parent)
 {
     QDir dir(path);
     QString filetosave;
@@ -179,7 +175,6 @@ bool ExtCopyProcess::copy_folder(QString &path, ExtFile *parent)
     EXT2DIRENT *dirent;
     Partition *part = parent->partition;
     ExtFile *child;
-    QByteArray ba;
     bool ret;
 
 
@@ -197,7 +192,7 @@ bool ExtCopyProcess::copy_folder(QString &path, ExtFile *parent)
         if(EXT2_S_ISDIR(child->inode.i_mode))
         {
 
-            ret = copy_folder(filetosave, child);
+            ret = CopyFolder(filetosave, child);
             if((ret == false) && (cancelOperation == true))
             {
                 part->close_dir(dirent);
@@ -212,13 +207,14 @@ bool ExtCopyProcess::copy_folder(QString &path, ExtFile *parent)
 
         filetosave.append(QString::fromAscii("/"));
         filetosave.append(codec->toUnicode(child->file_name.c_str()));
-        ret = copy_file(filetosave, child);
+        ret = CopyFile(filetosave, child);
         if((ret == false) && (cancelOperation == true))
         {
             part->close_dir(dirent);
             return false;
         }
     }
+    LOG("Каталог %s і його вміст збережено\n", parent->file_name.c_str());
     return true;
 }
 

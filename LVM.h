@@ -3,6 +3,9 @@
 
 #include <stdint.h>
 #include <QString>
+#include <stdlib.h>
+#include <sstream>
+#include <QRegExp>
 
 #include "Read.h"
 
@@ -36,13 +39,13 @@ class VolumeGroup;
 
 class LVM {
 private:
-    FileHandle pv_handle;
-    lloff_t pv_offset;
+    HANDLE pv_handle;
+    uint64_t pv_offset;
     char uuid[UUID_LEN + 1];
     QString pv_metadata;
     Read *read;
 public:
-    LVM(FileHandle handle, lloff_t offset, Read *rd);
+    LVM(HANDLE handle, uint64_t offset, Read *rd);
     ~LVM();
 
     int scan_pv();
@@ -54,12 +57,12 @@ public:
 
 class PhysicalVolume {
 public:
-    lloff_t dev_size;
-    FileHandle handle;
+    uint64_t dev_size;
+    HANDLE handle;
     uint32_t pe_start, pe_count;
-    lloff_t offset;     // offset from the start of disk to lvm volume
+    uint64_t offset;     // offset from the start of disk to lvm volume
     QString uuid;
-    PhysicalVolume(QString &id, lloff_t devsize, uint32_t start, uint32_t count, FileHandle file, lloff_t dsk_offset);
+    PhysicalVolume(QString &id, uint64_t devsize, uint32_t start, uint32_t count, HANDLE file, uint64_t dsk_offset);
 };
 
 // Multiple stripes NOT Implemented: we only support linear for now.
@@ -93,7 +96,7 @@ public:
 
     LogicalVolume(QString &id, int nsegs, QString &vname, VolumeGroup *);
     ~LogicalVolume();
-    lloff_t lvm_mapper(lloff_t block);
+    uint64_t lvm_mapper(uint64_t block);
 };
 
 class VolumeGroup {
@@ -111,7 +114,7 @@ public:
     VolumeGroup(QString &id, QString &name, int seq, int size);
     ~VolumeGroup();
     PhysicalVolume *find_physical_volume(QString &id);
-    PhysicalVolume *add_physical_volume(QString &id, lloff_t devsize, uint32_t start, uint32_t count, FileHandle file, lloff_t dsk_offset);
+    PhysicalVolume *add_physical_volume(QString &id, uint64_t devsize, uint32_t start, uint32_t count, HANDLE file, uint64_t dsk_offset);
     LogicalVolume *find_logical_volume(QString &id);
     LogicalVolume *add_logical_volume(QString &id, int count, QString &vname);
     void logical_mount();
@@ -121,7 +124,7 @@ public:
 #ifdef __cplusplus
 extern "C"{
 #endif
-int scan_lvm(FileHandle handle, lloff_t offset);
+int scan_lvm(HANDLE handle, uint64_t offset);
 
 #ifdef __cplusplus
 }

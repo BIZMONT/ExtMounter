@@ -1,10 +1,9 @@
-#include <dirent.h>
-
 #include "Read.h"
-#include "Partition.h"
+#include "MBR.h"
 #include "LVM.h"
+#include "ui_extexplorer.h"
 
-#define  EXT2	0x83
+#define  EXT	0x83
 #define  LINUX_LVM	0x8e
 
 Read::Read()
@@ -22,18 +21,18 @@ void Read::scan_system()
     char pathname[20];
     int ret;
 
-    ndisks = get_ndisks();
-    LOG_INFO("Кількість фізичних дисків: %d\n", ndisks);
-    LOG_INFO("=============================\n");
+    ndisks = GetDisks();
+    LOG("Знайдено фізичних дисків: %d\n", ndisks);
+    LOG("=============================\n");
 
     for(int i = 0; i < ndisks; i++)
     {
         get_nthdevice(pathname, ndisks);
-        LOG_INFO("\nСканування %s\n", pathname);
+        LOG("\nСканування %s\n", pathname);
         ret = scan_partitions(pathname, i);
         if(ret < 0)
         {
-            LOG_INFO("Помилка сканування %s!", pathname);
+            LOG("Помилка сканування %s!", pathname);
             continue;
         }
     }
@@ -68,19 +67,19 @@ list<Partition *> Read::get_partitions()
 }
 
 /* Reads The Extended Partitions */
-int Read::scan_ebr(FileHandle handle, lloff_t base, int sectsize, int disk)
+int Read::scan_ebr(HANDLE handle, uint64_t base, int sectsize, int disk)
 {
     unsigned char sector[SECTOR_SIZE];
     struct MBRpartition *part, *part1;
     Partition *partition;
     int logical = 4, ret;
-    lloff_t  ebrBase, nextPart, ebr2=0;
+    uint64_t  ebrBase, nextPart, ebr2=0;
 
     ebrBase = base;
     nextPart = base;
     while(1)
     {
-        ret = read_disk(handle, sector, nextPart, 1, sectsize);
+        ret = ReadDisk(handle, sector, nextPart, 1, sectsize);
         if(ret < 0)
             return ret;
 
@@ -90,9 +89,8 @@ int Read::scan_ebr(FileHandle handle, lloff_t base, int sectsize, int disk)
             return -1;
         }
         part = pt_offset(sector, 0);
-        LOG("index %d ID %X size %Ld \n", logical, part->sys_ind, get_nr_sects(part));
 
-        if(part->sys_ind == EXT2)
+        if(part->sys_ind == EXT)
         {
             partition = new Partition(get_nr_sects(part), get_start_sect(part)+ ebrBase + ebr2, sectsize, handle, NULL);
             if(partition->is_valid)
@@ -130,15 +128,15 @@ int Read::scan_partitions(char *path, int diskno)
     unsigned char sector[SECTOR_SIZE];
     struct MBRpartition *part;
     Partition *partition;
-    FileHandle handle;
+    HANDLE handle;
     int sector_size;
     int ret, i;
 
-    handle = open_disk(path, &sector_size);
+    handle = OpenDisk(path, &sector_size);
     if(handle < 0)
         return -1;
 
-    ret = read_disk(handle,sector, 0, 1, sector_size);
+    ret = ReadDisk(handle,sector, 0, 1, sector_size);
     if(ret < 0)
         return ret;
 
@@ -150,7 +148,7 @@ int Read::scan_partitions(char *path, int diskno)
 
     if(!valid_part_table_flag(sector))
     {
-        LOG("Partition Table Error on %s\n", path);
+        LOG("Помилка таблиці розділів на %s\n", path);
         LOG("Invalid End of sector marker");
         return -INVALID_TABLE;
     }
@@ -161,16 +159,16 @@ int Read::scan_partitions(char *path, int diskno)
         part = pt_offset(sector, i);
         if((part->sys_ind != 0x00) || (get_nr_sects(part) != 0x00))
         {
-            LOG("index %d ID %X size %Ld \n", i, part->sys_ind, get_nr_sects(part));
+            LOG("  Розділ: %d\n    Розмір: %.2f Гб\n", i, (double)get_nr_sects(part)*sector_size/1024/1024/1024);
 
-            if(part->sys_ind == EXT2)
+            if(part->sys_ind == EXT)
             {
                 partition = new Partition(get_nr_sects(part), get_start_sect(part), sector_size, handle, NULL);
                 if(partition->is_valid)
                 {
                     partition->set_linux_name("/dev/sd", diskno, i);
                     nparts.push_back(partition);
-                    LOG("На диску %d знайдено розділ %d\n", diskno, i);
+                    LOG("    Тип EXT\n\n", diskno, i);
                 }
                 else
                 {
@@ -180,13 +178,39 @@ int Read::scan_partitions(char *path, int diskno)
 
             if(part->sys_ind == LINUX_LVM)
             {
-                LOG("LVM Physical Volume found disk %d partition %d\n", diskno, i);
+                LOG("    Тип Linux LVM\n\n", diskno, i);
                 LVM lvm(handle, get_start_sect(part), this);
                 lvm.scan_pv();
             }
             else if((part->sys_ind == 0x05) || (part->sys_ind == 0x0f))
             {
+
                 scan_ebr(handle, get_start_sect(part), sector_size, diskno);
+            }
+
+            if(part->sys_ind != LINUX_LVM && part->sys_ind != EXT)
+            {
+                switch(part->sys_ind)
+                {
+                case 6:
+                    LOG("    Тип FAT16\n\n",i);
+                    break;
+                case 7:
+                    LOG("    Тип NTFS\n\n",i);
+                    break;
+                case 0x0b:
+                    LOG("    Тип FAT32\n\n",i);
+                    break;
+                case 0x0c:
+                    LOG("    Тип FAT32\n\n",i);
+                    break;
+                case 0x0f:
+                    LOG("    Тип Extended\n\n",i);
+                    break;
+                default:
+                    LOG("    Невідомий тип\n\n",i);
+                    break;
+                }
             }
         }
     }

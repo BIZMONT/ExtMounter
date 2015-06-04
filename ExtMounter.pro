@@ -18,9 +18,10 @@ HEADERS += \
     FileSystem.h \
     ExtExplorer.h \
     Read.h \
-    Partition.h \
-    Platform.h
-FORMS += ext2explore.ui \
-    ext2progress.ui
+    MBR.h \
+    DisksOperations.h
+FORMS += \
+    ExtExplorer.ui \
+    Progress.ui
 RESOURCES += ExtMounter.qrc
 RC_FILE = app.rc

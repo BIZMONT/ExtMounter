@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'ExtCopy.h'
 **
-** Created: Sun 31. May 22:44:35 2015
+** Created: Thu 4. Jun 20:59:32 2015
 **      by: The Qt Meta Object Compiler version 63 (Qt 4.8.1)
 **
 ** WARNING! All changes made in this file will be lost!

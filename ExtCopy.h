@@ -5,8 +5,10 @@
 #include <QFile>
 #include <QThread>
 #include <QTextCodec>
+#include <QMessageBox>
+#include <QDir>
 
-#include "ui_ext2progress.h"
+#include "ui_Progress.h"
 #include "Read.h"
 
 class ExtCopyProcess : public QThread
@@ -21,8 +23,8 @@ private:
     bool cancelOperation;
     QTextCodec *codec;
 
-    bool copy_folder(QString &path, ExtFile *file);
-    bool copy_file(QString &destfile, ExtFile *srcfile);
+    bool CopyFolder(QString &path, ExtFile *file);
+    bool CopyFile(QString &destfile, ExtFile *srcfile);
 
 protected:
     void run();
@@ -55,7 +57,7 @@ public:
     ~ExtCopy();
     void set_file(ExtFile *sfile) { file = sfile; }
     void set_name(QString &name) { filename = name; }
-    void start_copy();
+    void StartCopy();
 
 private:
     bool showMessageBox();

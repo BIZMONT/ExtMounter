@@ -3,8 +3,8 @@
 /*         by RRM       */
 
 
-#ifndef __EXT2FS_H
-#define __EXT2FS_H
+#ifndef __FILESYSYEM_H
+#define __FILESYSYEM_H
 
 #include <stdint.h>
 
