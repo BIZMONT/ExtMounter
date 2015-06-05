@@ -1,8 +1,3 @@
-/* Declarations for ext2 file system */
-/* Ripped from Linux Source. copyright Linus Trovaldis.*/
-/*         by RRM       */
-
-
 #ifndef __FILESYSYEM_H
 #define __FILESYSYEM_H
 

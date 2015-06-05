@@ -39,7 +39,8 @@ int GetDisks()
     int ndisks = 0;
     char path[20] = {"\\\\.\\PhysicalDrive0"};
 
-    do {
+    do
+    {
         hDevice = CreateFileA(path, // drive to open
                               GENERIC_READ,
                               FILE_SHARE_READ,  // share mode
@@ -51,7 +52,8 @@ int GetDisks()
             CloseHandle(hDevice);
         ndisks++;
         path[17] = (char)('0' + ndisks);
-    }while(hDevice != INVALID_HANDLE_VALUE);
+    }
+    while(hDevice != INVALID_HANDLE_VALUE);
 
     return ndisks - 1;
 }

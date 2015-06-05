@@ -1,10 +1,6 @@
 #ifndef __READ_H
 #define __READ_H
 
-#ifdef __GNUC__
- #include <stdint.h>
-#endif
-
 #include <list>
 #include <string>
 #include <QCache>
@@ -169,9 +165,8 @@ private:
 
     list <Partition *> nparts;
 
-    int scan_ebr(HANDLE , uint64_t , int , int);
-    int scan_partitions(char *path, int);
-    void clear_partitions();
+    int ScanEBR(HANDLE , uint64_t , int , int);
+    int ScanPartitions(char *path, int);
 
 
 public:
@@ -180,8 +175,8 @@ public:
 
     list <VolumeGroup *> groups;
 
-    void scan_system();
-    list<Partition *> get_partitions();
+    void ScanSystem();
+    list<Partition *> GetPartitions();
     list<VolumeGroup *> &get_volgroups() { return groups; }
     void add_partition(Partition *part) { nparts.push_back(part); }
 };

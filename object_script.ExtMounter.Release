@@ -4,9 +4,9 @@ INPUT(
 ./release\ExtExplorer.o
 ./release\FileSystem.o
 ./release\Read.o
-./release\LVM.o
 ./release\Log.o
 ./release\DisksOperations.o
+./release\Volume.o
 ./release\moc_ExtCopy.o
 ./release\moc_ExtExplorer.o
 ./release\qrc_ExtMounter.o

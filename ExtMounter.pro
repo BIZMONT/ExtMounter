@@ -9,17 +9,17 @@ SOURCES += main.cpp \
     ExtExplorer.cpp \
     FileSystem.cpp \
     Read.cpp \
-    LVM.cpp \
     Log.cpp \
-    DisksOperations.cpp
+    DisksOperations.cpp \
+    Volume.cpp
 HEADERS += \
     ExtCopy.h \
-    LVM.h \
     FileSystem.h \
     ExtExplorer.h \
     Read.h \
     MBR.h \
-    DisksOperations.h
+    DisksOperations.h \
+    Volume.h
 FORMS += \
     ExtExplorer.ui \
     Progress.ui

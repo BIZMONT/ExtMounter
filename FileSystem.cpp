@@ -1,5 +1,5 @@
 #include "Read.h"
-#include "LVM.h"
+#include "Volume.h"
 
 Partition::Partition(uint64_t size, uint64_t offset, int ssize, HANDLE phandle, LogicalVolume *vol)
 {
@@ -109,7 +109,7 @@ int Partition::mount()
     inodes_per_group = EXT2_INODES_PER_GROUP(&sblock);
     inode_size = EXT2_INODE_SIZE(&sblock);
 
-    LOG("    Розмір блоку: %d\n    inp: %d\n    inodesize: %d\n", blocksize, inodes_per_group, inode_size);
+    LOG("    Розмір блоку: %d\n", blocksize);
     totalGroups = (sblock.s_blocks_count)/EXT2_BLOCKS_PER_GROUP(&sblock);
     gSizeb = (sizeof(EXT2_GROUP_DESC) * totalGroups);
     gSizes = (gSizeb / sect_size)+1;

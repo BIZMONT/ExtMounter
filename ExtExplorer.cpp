@@ -42,7 +42,6 @@ ExtExplorer::ExtExplorer(QWidget *parent) : QMainWindow(parent), ui(new Ui::ExtE
 
     codec = QTextCodec::codecForName("utf-8");
 
-
     InitFileSystemRoot();
     Loging();
 }
@@ -96,7 +95,7 @@ void ExtExplorer::InitFileSystemRoot()//Формування коренневого каталогу дерева
     QStandardItem *item;
     void *ptr;
 
-    parts = app->get_partitions();
+    parts = app->GetPartitions();
     for(i = parts.begin(); i != parts.end(); i++)
     {
         temp = (*i);

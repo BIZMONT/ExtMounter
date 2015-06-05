@@ -4,9 +4,9 @@ INPUT(
 ./debug\ExtExplorer.o
 ./debug\FileSystem.o
 ./debug\Read.o
-./debug\LVM.o
 ./debug\Log.o
 ./debug\DisksOperations.o
+./debug\Volume.o
 ./debug\moc_ExtCopy.o
 ./debug\moc_ExtExplorer.o
 ./debug\qrc_ExtMounter.o
