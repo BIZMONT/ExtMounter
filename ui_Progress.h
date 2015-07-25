@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'Progress.ui'
 **
-** Created: Thu 4. Jun 22:13:47 2015
+** Created: Sun 14. Jun 00:50:35 2015
 **      by: Qt User Interface Compiler version 4.8.1
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -66,7 +66,7 @@ public:
 
     void retranslateUi(QDialog *ProgressDialog)
     {
-        ProgressDialog->setWindowTitle(QApplication::translate("ProgressDialog", "Copying Files ...", 0, QApplication::UnicodeUTF8));
+        ProgressDialog->setWindowTitle(QApplication::translate("ProgressDialog", "\320\232\320\276\320\277\321\226\321\216\320\262\320\260\320\275\320\275\321\217 ...", 0, QApplication::UnicodeUTF8));
         FileLabel->setText(QApplication::translate("ProgressDialog", "0", 0, QApplication::UnicodeUTF8));
         ToLabel->setText(QApplication::translate("ProgressDialog", "0", 0, QApplication::UnicodeUTF8));
         Fromlabel->setText(QApplication::translate("ProgressDialog", "0", 0, QApplication::UnicodeUTF8));

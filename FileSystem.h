@@ -111,22 +111,6 @@ EXT2_GOOD_OLD_INODE_SIZE : (s)->s_inode_size)
 #define EXT2_FIRST_INO(s)	(((s)->s_rev_level == EXT2_GOOD_OLD_REV) ? \
 EXT2_GOOD_OLD_FIRST_INO :  (s)->s_first_ino)
 
-/* In Linux disk is divided into Blocks. These Blocks are divided into Groups. This   */
-/* Structure shows different types of groups but it is not implemented. Not Necessary */
-/*
-typedef struct tagBLOCK_GROUP
-{
-	1. The SuperBlock
-	2. The Group Descriptors
-	3. The block Bitmap
-	4. The Inode Bitmap
-	5. The Inode Table
-	6. Data Blocks and Fragments
-
-}BLOCK_GROUP;
-
-*/
-
 /* The Super Block comes first in the block group */
 typedef struct tagEXT2_SUPER_BLOCK
 {

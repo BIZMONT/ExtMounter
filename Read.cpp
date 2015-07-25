@@ -1,6 +1,5 @@
 #include "Read.h"
 #include "MBR.h"
-#include "Volume.h"
 
 #include "ui_extexplorer.h"
 
@@ -27,12 +26,15 @@ void Read::ScanSystem()
 
     ndisks = GetDisks();
     LOG("Знайдено фізичних дисків: %d\n", ndisks);
-    LOG("=============================\n");
+    if(ndisks == 0)
+    {
+        LOG("Можливо потрібно відкрити програму з правами Адміністратора\n");
+    }
 
     for(int i = 0; i < ndisks; i++)
     {
         get_nthdevice(pathname, ndisks);
-        LOG("\nСканування %s\n", pathname);
+        LOG("\nСканування диску %c\n", pathname[17]);
         ret = ScanPartitions(pathname, i);
         if(ret < 0)
         {
@@ -41,17 +43,8 @@ void Read::ScanSystem()
         }
     }
 
-    // Now Mount the LVM Partitions
     if(groups.empty())
         return;
-
-    list<VolumeGroup *>::iterator i;
-    VolumeGroup *grp;
-    for(i = groups.begin(); i != groups.end(); i++)
-    {
-        grp = (*i);
-        grp->logical_mount();
-    }
 }
 
 list<Partition *> Read::GetPartitions()
@@ -59,13 +52,12 @@ list<Partition *> Read::GetPartitions()
     return nparts;
 }
 
-/* Reads The Extended Partitions */
-int Read::ScanEBR(HANDLE handle, uint64_t base, int sectsize, int disk)
+int Read::ScanEBR(HANDLE handle, uint64_t base, int sectsize, int disk, int i)
 {
     unsigned char sector[SECTOR_SIZE];
     struct MBRpartition *part, *part1;
     Partition *partition;
-    int logical = 4, ret;
+    int ret;
     uint64_t  ebrBase, nextPart, ebr2=0;
 
     ebrBase = base;
@@ -83,40 +75,62 @@ int Read::ScanEBR(HANDLE handle, uint64_t base, int sectsize, int disk)
         }
         part = pt_offset(sector, 0);
 
-        if(part->sys_ind == 0x83)
+        LOG("    Розділ: %d\n    Розмір: %.2f Гб\n", i, (double)get_nr_sects(part)*sectsize/1024/1024/1024);
+
+        switch(part->sys_ind)
         {
-            partition = new Partition(get_nr_sects(part), get_start_sect(part)+ ebrBase + ebr2, sectsize, handle, NULL);
+        case 0x06:
+            LOG("    Тип FAT16\n\n");
+            break;
+        case 0x07:
+            LOG("    Тип NTFS\n\n");
+            break;
+        case 0x0b:
+            LOG("    Тип FAT32\n\n");
+            break;
+        case 0x0c:
+            LOG("    Тип FAT32\n\n");
+            break;
+        case 0x82:
+            LOG("    Тип SWAP\n\n");
+            break;
+        case 0x83:
+            partition = new Partition(get_nr_sects(part), get_start_sect(part)+ ebrBase + ebr2, sectsize, handle);
+            LOG("    Тип EXT\n\n");
             if(partition->is_valid)
             {
-                partition->set_linux_name("/dev/sd", disk, logical);
+                partition->SetName("Диск ", disk, i);
                 nparts.push_back(partition);
             }
             else
             {
                 delete partition;
             }
+            break;
+        default:
+            LOG("      Невідомий тип\n\n");
+            break;
         }
 
+        i++;
         part1 = pt_offset(sector, 1);
         ebr2 = get_start_sect(part1);
         nextPart = (ebr2 + ebrBase);
 
-        logical++;
         if(part1->sys_ind == 0)
             break;
     }
-    return logical;
+    return i;
 }
 
-/* Scans The partitions */
-int Read::ScanPartitions(char *path, int diskno)
+int Read::ScanPartitions(char *path, int disk)
 {
     unsigned char sector[SECTOR_SIZE];
     struct MBRpartition *part;
     Partition *partition;
     HANDLE handle;
     int sector_size;
-    int ret, i;
+    int ret, i, n = 0;
 
     handle = OpenDisk(path, &sector_size);
     if(handle < 0)
@@ -145,37 +159,40 @@ int Read::ScanPartitions(char *path, int diskno)
         part = pt_offset(sector, i);
         if((part->sys_ind != 0x00) || (get_nr_sects(part) != 0x00))
         {
-            LOG("  Розділ: %d\n    Розмір: %.2f Гб\n", i, (double)get_nr_sects(part)*sector_size/1024/1024/1024);
-
             switch(part->sys_ind)
             {
             case 0x05:
-                ScanEBR(handle, get_start_sect(part), sector_size, diskno);
-                LOG("    Тип Extended\n\n",i);
+                ScanEBR(handle, get_start_sect(part), sector_size, disk, i);
                 break;
             case 0x06:
-                LOG("    Тип FAT16\n\n");
+                LOG("    Розділ: %d\n    Розмір: %.2f Гб\n    Тип FAT16\n\n",
+                    i, (double)get_nr_sects(part)*sector_size/1024/1024/1024);
                 break;
             case 0x07:
-                LOG("    Тип NTFS\n\n");
+                LOG("    Розділ: %d\n    Розмір: %.2f Гб\n    Тип NTFS\n\n",
+                    i, (double)get_nr_sects(part)*sector_size/1024/1024/1024);
                 break;
             case 0x0b:
-                LOG("    Тип FAT32\n\n");
+                LOG("    Розділ: %d\n    Розмір: %.2f Гб\n    Тип FAT32\n\n",
+                    i, (double)get_nr_sects(part)*sector_size/1024/1024/1024);
                 break;
             case 0x0c:
-                LOG("    Тип FAT32\n\n");
+                LOG("    Розділ: %d\n    Розмір: %.2f Гб\n    Тип FAT32\n\n",
+                    i, (double)get_nr_sects(part)*sector_size/1024/1024/1024);
                 break;
             case 0x0f:
-                ScanEBR(handle, get_start_sect(part), sector_size, diskno);
-                LOG("    Тип Extended\n\n");
+                ScanEBR(handle, get_start_sect(part), sector_size, disk, i);
                 break;
             case 0x83:
-                partition = new Partition(get_nr_sects(part), get_start_sect(part), sector_size, handle, NULL);
+                n++;
+                LOG("    Розділ: %d\n    Розмір: %.2f Гб\n",
+                    i, (double)get_nr_sects(part)*sector_size/1024/1024/1024);
+                partition = new Partition(get_nr_sects(part), get_start_sect(part), sector_size, handle);
+                LOG("    Тип EXT\n\n");
                 if(partition->is_valid)
                 {
-                    partition->set_linux_name("/dev/sd", diskno, i);
+                    partition->SetName("Диск ", disk, i);
                     nparts.push_back(partition);
-                    LOG("    Тип EXT\n\n");
                 }
                 else
                 {
@@ -188,6 +205,5 @@ int Read::ScanPartitions(char *path, int diskno)
             }
         }
     }
-
     return 0;
 }

@@ -22,11 +22,11 @@ ExtCopy::~ExtCopy()
     delete progress;
 }
 
-void ExtCopy::StartCopy()
+bool ExtCopy::StartCopy()
 {
     if(!EXT2_S_ISREG(file->inode.i_mode) &&
        !EXT2_S_ISDIR(file->inode.i_mode))
-        return ;
+        return false;
 
     proc = new ExtCopyProcess(file, filename);
     qRegisterMetaType<QString>("QString&");
@@ -36,8 +36,10 @@ void ExtCopy::StartCopy()
     QObject::connect(this, SIGNAL(signal_cancelprocess()), proc, SLOT(slot_cancelprocess()));
     QObject::connect(this, SIGNAL(accepted()), proc, SLOT(slot_cancelprocess()));
     QObject::connect(this, SIGNAL(rejected()), proc, SLOT(slot_cancelprocess()));
+
     this->show();
     proc->start();
+    return true;
 }
 
 bool ExtCopy::showMessageBox()
@@ -84,7 +86,7 @@ ExtCopyProcess::ExtCopyProcess(ExtFile *parent, QString &dest): QThread()
 {
     filename = dest;
     file = parent;
-    blksize = parent->partition->get_blocksize();
+    blksize = parent->partition->GetBlockSize();
     buffer = new char [blksize];
     filetosave = NULL;
     cancelOperation = false;
@@ -140,7 +142,7 @@ bool ExtCopyProcess::CopyFile(QString &destfile, ExtFile *srcfile)
         {
             return false;
         }
-        ret = srcfile->partition->read_data_block(&srcfile->inode, blkindex, buffer);
+        ret = srcfile->partition->ReadDataBlock(&srcfile->inode, blkindex, buffer);
         if(ret < 0)
         {
             filetosave->close();
@@ -154,7 +156,7 @@ bool ExtCopyProcess::CopyFile(QString &destfile, ExtFile *srcfile)
     extra = srcfile->file_size % blksize;
     if(extra)
     {
-        ret = srcfile->partition->read_data_block(&srcfile->inode, blkindex, buffer);
+        ret = srcfile->partition->ReadDataBlock(&srcfile->inode, blkindex, buffer);
         if(ret < 0)
         {
             filetosave->close();
@@ -183,8 +185,8 @@ bool ExtCopyProcess::CopyFolder(QString &path, ExtFile *parent)
 
     dir.mkdir(codec->toUnicode(parent->file_name.c_str()));
 
-    dirent = part->open_dir(parent);
-    while((child = part->read_dir(dirent)) != NULL)
+    dirent = part->OpenDirectory(parent);
+    while((child = part->ReadDirectory(dirent)) != NULL)
     {
         filetosave = rootname;
         filetosave.append(QString::fromAscii("/"));
@@ -195,7 +197,7 @@ bool ExtCopyProcess::CopyFolder(QString &path, ExtFile *parent)
             ret = CopyFolder(filetosave, child);
             if((ret == false) && (cancelOperation == true))
             {
-                part->close_dir(dirent);
+                part->CloseDirectory(dirent);
                 return false;
             }
             continue;
@@ -210,7 +212,7 @@ bool ExtCopyProcess::CopyFolder(QString &path, ExtFile *parent)
         ret = CopyFile(filetosave, child);
         if((ret == false) && (cancelOperation == true))
         {
-            part->close_dir(dirent);
+            part->CloseDirectory(dirent);
             return false;
         }
     }

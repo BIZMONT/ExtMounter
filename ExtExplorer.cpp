@@ -10,11 +10,11 @@ ExtExplorer::ExtExplorer(QWidget *parent) : QMainWindow(parent), ui(new Ui::ExtE
 
     ui->setupUi(this);
 
-    ui->mainsplitter->setStretchFactor(0, 2);
-    ui->mainsplitter->setStretchFactor(1, 1);
+    ui->mainsplitter->setStretchFactor(0, 1);
+    ui->mainsplitter->setStretchFactor(1, 2);
 
-    ui->splitter->setStretchFactor(0, 1);
-    ui->splitter->setStretchFactor(1, 3);
+    ui->splitter->setStretchFactor(0, 2);
+    ui->splitter->setStretchFactor(1, 1);
 
     ui->tree->setModel(filemodel);
     ui->tree->header()->hide();
@@ -24,21 +24,16 @@ ExtExplorer::ExtExplorer(QWidget *parent) : QMainWindow(parent), ui(new Ui::ExtE
     ui->list->setSelectionBehavior(QAbstractItemView::SelectRows);
     ui->list->setSelectionMode( QAbstractItemView::SingleSelection );
     ui->list->setModel(filemodel);
-    ui->list->setViewMode(QListView::IconMode);
-    ui->list->setIconSize(QSize(50,60));
-    ui->list->setMovement(QListView::Static);
-    ui->list->setWordWrap(true);
-    ui->list->setWrapping(true);
 
     root = filemodel->invisibleRootItem();
     selectionModel = ui->list->selectionModel();
     ui->tree->setSelectionModel(selectionModel);
 
-    this->setContextMenuPolicy(Qt::CustomContextMenu);
+    ui->list->setContextMenuPolicy(Qt::CustomContextMenu);
 
     connect(ui->tree, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(on_action_item_dbclicked(const QModelIndex &)));
     connect(ui->list, SIGNAL(doubleClicked(QModelIndex)), this, SLOT(on_action_item_dbclicked(const QModelIndex &)));
-    connect(this, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(ContextMenu(const QPoint &)));
+    connect(ui->list, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(ContextMenu(const QPoint &)));
 
     codec = QTextCodec::codecForName("utf-8");
 
@@ -58,7 +53,7 @@ void ExtExplorer::Loging()
     QFile file("ExtMounter.log");
     file.open(QIODevice::ReadOnly);
     QString str = file.readAll();
-    ui->worklog->setText(str);
+    ui->log->setText(str);
     file.close();
 }
 
@@ -87,36 +82,43 @@ void ExtExplorer::DeleteChildren(QStandardItem *parent)
     parent->removeRows(0, nrows);
 }
 
-void ExtExplorer::InitFileSystemRoot()//‘ормуванн€ коренневого каталогу дерева
+void ExtExplorer::InitFileSystemRoot()
 {
     Partition *temp;
     list<Partition *> parts;
     list<Partition *>::iterator i;
     QStandardItem *item;
+    QStandardItem *rootitem;
     void *ptr;
 
+
     parts = app->GetPartitions();
+    rootitem = new QStandardItem(QIcon(QString::fromAscii(":/icons/resource/computer.png")),
+                             ComputerName());
+    rootitem->setEditable(false);
+    root->appendRow(rootitem);
+
     for(i = parts.begin(); i != parts.end(); i++)
     {
         temp = (*i);
 
-        // check if it is already in the view
         if(temp->onview)
             continue;
 
         item = new QStandardItem(QIcon(QString::fromAscii(":/icons/resource/disk.png")),
-                                 QString::fromStdString(temp->get_linux_name()));
-        if(!temp->get_root())
+                                 QString::fromStdString(temp->GetLinuxName()));
+
+        if(!temp->GetRoot())
         {
-            LOG("ѕомилка кореневого каталогу дл€ %s!\n", temp->get_linux_name().c_str());
+            LOG("ѕомилка кореневого каталогу дл€ %s!\n", temp->GetLinuxName().c_str());
             delete item;
             continue;
         }
 
-        ptr = temp->get_root();
+        ptr = temp->GetRoot();
         item->setData(qVariantFromValue(ptr), Qt::UserRole);
         item->setEditable(false);
-        root->appendRow(item);
+        rootitem->appendRow(item);
 
         temp->onview = true;
     }
@@ -124,21 +126,13 @@ void ExtExplorer::InitFileSystemRoot()//‘ормуванн€ коренневого каталогу дерева
 
 void ExtExplorer::ContextMenu(const QPoint &point)
 {
-    QMenu menu(ui->splitter);
-    menu.addAction(ui->action_Save);
-    menu.exec(this->mapToGlobal(point));
-}
-
-QString ExtExplorer::handle_mime(string file, uint16_t mode)
-{
-    QString str;
-
-    if(EXT2_S_ISDIR(mode))
-        str = QString::fromAscii(":/icons/resource/file_folder.png");
-    else
-        str = QString::fromAscii(":/icons/resource/file_unknown.png");
-
-    return str;
+    QModelIndex index = ui->list->indexAt(point);
+    if (index.isValid())
+    {
+        QMenu menu(this);
+        menu.addAction(ui->action_Save);
+        menu.exec(ui->list->mapToGlobal(point));
+    }
 }
 
 void ExtExplorer::changeEvent(QEvent *e)
@@ -159,17 +153,18 @@ void ExtExplorer::on_action_Exit_triggered()
     delete ui;
     delete filemodel;
     delete app;
-
     close();
 }
 
 void ExtExplorer::on_action_Rescan_System_triggered()
 {
+    ui->log->clear();
     DeleteChildren(root);
-    delete app;
 
     app = new Read();
     InitFileSystemRoot();
+    QFile file("ExtMounter.log");
+    file.open(QIODevice::ReadOnly);
     Loging();
 }
 
@@ -182,32 +177,40 @@ void ExtExplorer::on_action_item_dbclicked(const QModelIndex &index)
     QVariant fileData;
     EXT2DIRENT *dir;
     Partition *part;
+    QString itemType;
 
     parentItem = filemodel->itemFromIndex(index);
-    fileData = parentItem->data(Qt::UserRole);
-    parentFile = (ExtFile *) fileData.value<void *>();
 
-    if(!EXT2_S_ISDIR(parentFile->inode.i_mode))
-        return;
-
-    ui->list->setRootIndex(index);
-    if(parentFile->onview)
-        return;
-
-    part = parentFile->partition;
-
-    dir = part->open_dir(parentFile);
-    while((files = part->read_dir(dir)) != NULL)
+    if(parentItem->text()!= ComputerName())
     {
-        children = new QStandardItem(QIcon(handle_mime(files->file_name, files->inode.i_mode)),
-                                     codec->toUnicode(files->file_name.c_str()));
-        children->setData(qVariantFromValue((void *)files), Qt::UserRole);
-        children->setEditable(false);
-        parentItem->appendRow(children);
-        parentFile->onview = true;
-    }
+        fileData = parentItem->data(Qt::UserRole);
+        parentFile = (ExtFile *) fileData.value<void *>();
 
-    part->close_dir(dir);
+        if(!EXT2_S_ISDIR(parentFile->inode.i_mode))
+            return;
+
+        ui->list->setRootIndex(index);
+        if(parentFile->onview)
+            return;
+
+        part = parentFile->partition;
+
+        dir = part->OpenDirectory(parentFile);
+        while((files = part->ReadDirectory(dir)) != NULL)
+        {
+            if(EXT2_S_ISDIR(files->inode.i_mode))
+                itemType = QString::fromAscii(":/icons/resource/folder.png");
+            else
+                itemType = QString::fromAscii(":/icons/resource/file.png");
+
+            children = new QStandardItem(QIcon(itemType), codec->toUnicode(files->file_name.c_str()));
+            children->setData(qVariantFromValue((void *)files), Qt::UserRole);
+            children->setEditable(false);
+            parentItem->appendRow(children);
+            parentFile->onview = true;
+        }
+        part->CloseDirectory(dir);
+    }
 }
 
 void ExtExplorer::on_action_Save_triggered()
@@ -242,8 +245,15 @@ void ExtExplorer::on_action_Save_triggered()
     if(filename.isEmpty())
         return;
 
-    copyfile.set_file(file);
-    copyfile.set_name(filename);
+    copyfile.SetFile(file);
+    copyfile.SetName(filename);
     copyfile.StartCopy();
-    Loging();
+}
+
+QString ExtExplorer::ComputerName()
+{
+    WCHAR compName[255];
+    DWORD size = sizeof(compName);
+    GetComputerName(compName, &size);
+    return QString::fromWCharArray(compName, -1);
 }

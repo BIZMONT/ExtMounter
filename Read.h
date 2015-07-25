@@ -7,7 +7,6 @@
 #include <dirent.h>
 
 #include "DisksOperations.h"
-#include <windows.h>
 #include "FileSystem.h"
 
 #define MAX_CACHE_SIZE          500
@@ -92,7 +91,6 @@ static __inline__ char *get_access(unsigned long mode)
 // forward declaration
 class Partition;
 class VolumeGroup;
-class LogicalVolume;
 
 class ExtFile {
 public:
@@ -110,52 +108,51 @@ typedef struct ext2dirent {
     EXT2_DIR_ENTRY *next;
     EXT2_DIR_ENTRY *dirbuf;
     ExtFile *parent;
-    uint64_t read_bytes;     // Bytes already read
+    uint64_t read_bytes;
     uint64_t next_block;
 } EXT2DIRENT;
 
 class Partition {
     HANDLE  handle;
-    int         sect_size;
-    uint64_t	total_sectors;
-    uint64_t 	relative_sect;
-    string      linux_name;
+    int sect_size;
+    uint64_t total_sectors;
+    uint64_t relative_sect;
+    string linux_name;
 
     int inodes_per_group;
     int inode_size;
     int blocksize;
     uint32_t totalGroups;
     EXT2_GROUP_DESC *desc;
-    char *inode_buffer;         // buffer to cache last used block of inodes
-    uint64_t last_block;          // block number of the last inode block read
+    char *inode_buffer;
+    uint64_t last_block;
     ExtFile *root;
-    QCache <uint64_t , char > buffercache; //LRU based cache for blocks
-    LogicalVolume *lvol;
+    QCache <uint64_t , char > buffercache;
     
-    int readblock(uint64_t blocknum, void *buffer);
-    uint32_t fileblock_to_logical(EXT2_INODE *ino, uint32_t lbn);
-    uint64_t extent_to_logical(EXT2_INODE *ino, uint64_t lbn);
-    uint64_t extent_binarysearch(EXT4_EXTENT_HEADER *header, uint64_t lbn, bool isallocated);
-    int mount();
+    int ReadBlock(uint64_t blocknum, void *buffer);
+    uint32_t FileblockToLogical(EXT2_INODE *ino, uint32_t lbn);
+    uint64_t ExtentToLogical(EXT2_INODE *ino, uint64_t lbn);
+    uint64_t ExtentBinarySearch(EXT4_EXTENT_HEADER *header, uint64_t lbn, bool isallocated);
+    int Mount();
 
 public:
-    bool onview;        // flag to determine if it is already added to view.
-    bool is_valid;      // is this valid Ext2/3/4 partition
+    bool onview;
+    bool is_valid;
 
 public:
-    Partition(uint64_t, uint64_t, int ssise, HANDLE , LogicalVolume *vol);
+    Partition(uint64_t, uint64_t, int ssise, HANDLE);
     ~Partition();
 
-    void set_linux_name(const char *, int , int);
-    void set_image_name(const char *name) { linux_name.assign(name); }
-    string &get_linux_name();
-    ExtFile *get_root() { return root; }
-    int get_blocksize() { return blocksize; }
-    ExtFile *read_inode(uint32_t inum);
-    int read_data_block(EXT2_INODE *ino, uint64_t lbn, void *buf);
-    EXT2DIRENT *open_dir(ExtFile *parent);
-    ExtFile *read_dir(EXT2DIRENT *);
-    void close_dir(EXT2DIRENT *);
+    void SetName(const char *, int , int);
+    void SetImageName(const char *name) { linux_name.assign(name); }
+    string &GetLinuxName();
+    ExtFile *GetRoot() { return root; }
+    int GetBlockSize() { return blocksize; }
+    ExtFile *ReadInode(uint32_t inum);
+    int ReadDataBlock(EXT2_INODE *ino, uint64_t lbn, void *buf);
+    EXT2DIRENT *OpenDirectory(ExtFile *parent);
+    ExtFile *ReadDirectory(EXT2DIRENT *);
+    void CloseDirectory(EXT2DIRENT *);
 
 };
 
@@ -165,7 +162,7 @@ private:
 
     list <Partition *> nparts;
 
-    int ScanEBR(HANDLE , uint64_t , int , int);
+    int ScanEBR(HANDLE , uint64_t , int , int, int);
     int ScanPartitions(char *path, int);
 
 

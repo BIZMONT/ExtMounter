@@ -1,13 +1,14 @@
 <RCC>
     <qresource prefix="/icons">
-        <file>resource/foldernew.png</file>
-        <file>resource/Rescan.png</file>
+        <file>resource/computer.png</file>
         <file>resource/disk.png</file>
+        <file>resource/folder.png</file>
+        <file>resource/file.png</file>
         <file>resource/exit.png</file>
-        <file>resource/file_folder.png</file>
-        <file>resource/file_unknown.png</file>
-        <file>resource/filenew.png</file>
-        <file>resource/filesave.png</file>
+        <file>resource/ico24.ico</file>
+        <file>resource/save.png</file>
+        <file>resource/Icon.png</file>
         <file>resource/Icon.ico</file>
+        <file>resource/Rescan.png</file>
     </qresource>
 </RCC>

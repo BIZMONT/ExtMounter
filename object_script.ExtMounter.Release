@@ -2,11 +2,10 @@ INPUT(
 ./release\main.o
 ./release\ExtCopy.o
 ./release\ExtExplorer.o
-./release\FileSystem.o
 ./release\Read.o
 ./release\Log.o
 ./release\DisksOperations.o
-./release\Volume.o
+./release\Partition.o
 ./release\moc_ExtCopy.o
 ./release\moc_ExtExplorer.o
 ./release\qrc_ExtMounter.o

@@ -55,9 +55,9 @@ public:
     ExtCopy(ExtFile *parent, QString &dest);
     ExtCopy();
     ~ExtCopy();
-    void set_file(ExtFile *sfile) { file = sfile; }
-    void set_name(QString &name) { filename = name; }
-    void StartCopy();
+    void SetFile(ExtFile *sfile) { file = sfile; }
+    void SetName(QString &name) { filename = name; }
+    bool StartCopy();
 
 private:
     bool showMessageBox();

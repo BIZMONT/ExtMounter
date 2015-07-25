@@ -38,9 +38,9 @@ private:
     QTextCodec *codec;
 
     void InitFileSystemRoot();
-    QString handle_mime(string file, uint16_t mode);
-    void Loging();
     void DeleteChildren(QStandardItem *parent);
+    QString ComputerName();
+    void Loging();
 
 private slots:
     void on_action_Save_triggered();

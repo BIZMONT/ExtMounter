@@ -7,19 +7,17 @@ TEMPLATE = app
 SOURCES += main.cpp \
     ExtCopy.cpp \
     ExtExplorer.cpp \
-    FileSystem.cpp \
     Read.cpp \
     Log.cpp \
     DisksOperations.cpp \
-    Volume.cpp
+    Partition.cpp
 HEADERS += \
     ExtCopy.h \
     FileSystem.h \
     ExtExplorer.h \
     Read.h \
     MBR.h \
-    DisksOperations.h \
-    Volume.h
+    DisksOperations.h
 FORMS += \
     ExtExplorer.ui \
     Progress.ui
